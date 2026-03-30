@@ -165,3 +165,16 @@ Repository использует только `JdbcClient` и native SQL. ORM/JPA
 
 - сгенерировать его командой `gradle wrapper` в корне проекта,
 - либо открыть проект в IntelliJ IDEA и запустить Gradle tasks из IDE.
+
+
+## Примечание по IDE
+
+В IntelliJ IDEA может отображаться предупреждение вида:
+
+Cannot access class 'org.mockito.Answers'. Check your module classpath for missing or conflicting dependencies
+
+В данном проекте это является IDE false positive, так как:
+
+- проект успешно собирается через Gradle
+- тесты проходят
+- приложение запускается корректно
