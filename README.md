@@ -1,6 +1,7 @@
+
 # Task Catalog
 
-REST сервис для управления задачами, реализованный на Kotlin + Spring Boot + Reactor + JdbcClient + native SQL.
+REST-сервис для управления задачами, реализованный на Kotlin, Spring Boot, Reactor, JdbcClient и native SQL.
 
 ## Что реализовано
 
@@ -18,9 +19,9 @@ REST сервис для управления задачами, реализов
 ## Стек
 
 - Kotlin
-- Spring Boot 4.0.5
+- Spring Boot 3.4.4
 - Spring WebFlux
-- Project Reactor (`Mono`, `Flux`-совместимый сервисный слой)
+- Project Reactor (`Mono`, `Flux`)
 - Spring JDBC `JdbcClient`
 - H2
 - Flyway
@@ -37,44 +38,46 @@ src/main/kotlin/com/example/taskcatalog
 ├── model
 ├── repository
 └── service
-```
+````
 
 ## Почему WebFlux + JdbcClient
 
-`JdbcClient` работает поверх JDBC и остаётся блокирующим API. Поэтому reactive-подход здесь реализован в сервисном слое: блокирующие repository-вызовы оборачиваются в `Mono.fromCallable { ... }` / `Mono.fromRunnable { ... }` и выполняются на `Schedulers.boundedElastic()`.
+`JdbcClient` работает поверх JDBC и остаётся блокирующим API. Поэтому reactive-подход реализован в сервисном слое: блокирующие repository-вызовы оборачиваются в Reactor-типы и выполняются на `Schedulers.boundedElastic()`.
 
 Это позволяет:
 
-- соблюдать требование ТЗ по Reactor
-- не блокировать event-loop WebFlux
-- сохранить простой и читаемый JDBC repository слой
+* соблюдать требование ТЗ по Reactor
+* не блокировать event-loop WebFlux
+* сохранить простой и читаемый JDBC repository слой
 
 ## Запуск
 
-Нужна Java 17+ и Gradle 8.14+.
+Нужна Java 21.
+
+### Запуск приложения
 
 ```bash
 ./gradlew bootRun
 ```
 
-или
+Для Windows PowerShell:
 
-```bash
-gradle bootRun
+```powershell
+.\gradlew.bat bootRun
 ```
 
 После запуска приложение доступно на `http://localhost:8080`.
 
-## Запуск тестов
+### Запуск тестов
 
 ```bash
 ./gradlew test
 ```
 
-или
+Для Windows PowerShell:
 
-```bash
-gradle test
+```powershell
+.\gradlew.bat test
 ```
 
 ## API
@@ -96,14 +99,16 @@ Request:
 
 `GET /api/tasks?page=0&size=10&status=NEW`
 
-- `page` — обязательный
-- `size` — обязательный
-- `status` — опциональный
-- сортировка по `created_at desc`
+* `page` — обязательный
+* `size` — обязательный
+* `status` — опциональный
+* сортировка по `created_at desc`
 
 ### 3. Получить задачу по id
 
 `GET /api/tasks/{id}`
+
+Если задача не найдена, возвращается `404 Not Found`.
 
 ### 4. Обновить статус
 
@@ -120,6 +125,8 @@ Request:
 ### 5. Удалить задачу
 
 `DELETE /api/tasks/{id}`
+
+Возвращает `204 No Content`.
 
 ## Примеры curl
 
@@ -153,28 +160,52 @@ Repository использует только `JdbcClient` и native SQL. ORM/JPA
 
 Основные запросы:
 
-- `insert into tasks ...`
-- `select ... from tasks where id = :id`
-- `select ... from tasks where status = :status order by created_at desc limit :limit offset :offset`
-- `update tasks set status = :status, updated_at = :updatedAt where id = :id`
-- `delete from tasks where id = :id`
+* `insert into tasks ...`
+* `select ... from tasks where id = :id`
+* `select ... from tasks where status = :status order by created_at desc limit :limit offset :offset`
+* `update tasks set status = :status, updated_at = :updatedAt where id = :id`
+* `delete from tasks where id = :id`
 
-## Замечание по Gradle Wrapper
+## Тесты
 
-В архиве сохранён полноценный исходный код проекта. Если в вашей среде нет Gradle Wrapper, можно либо:
+Покрыты основные сценарии:
 
-- сгенерировать его командой `gradle wrapper` в корне проекта,
-- либо открыть проект в IntelliJ IDEA и запустить Gradle tasks из IDE.
+### Service
 
+* успешное создание задачи
+* получение задачи по id
+* ошибка при отсутствии задачи
+* обновление статуса
+* удаление задачи
+* получение списка задач с фильтрацией и пагинацией
+
+### Controller
+
+* корректные HTTP-статусы
+* валидация входных данных
+* `404` для отсутствующей задачи
+
+### Repository
+
+Repository покрыт интеграционными тестами с использованием H2.
 
 ## Примечание по IDE
 
 В IntelliJ IDEA может отображаться предупреждение вида:
 
-Cannot access class 'org.mockito.Answers'. Check your module classpath for missing or conflicting dependencies
+> Cannot access class 'org.mockito.Answers'. Check your module classpath for missing or conflicting dependencies
 
 В данном проекте это является IDE false positive, так как:
 
-- проект успешно собирается через Gradle
-- тесты проходят
-- приложение запускается корректно
+* проект успешно собирается через Gradle
+* тесты проходят
+* приложение запускается корректно
+
+Источник истины для проверки проекта - результат команд:
+
+```powershell
+.\gradlew.bat clean test
+.\gradlew.bat bootRun
+```
+
+
